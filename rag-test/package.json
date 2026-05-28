@@ -1,0 +1,16 @@
+{
+  "name": "rag-test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --env-file=.env ./src/hello-rag.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@langchain/classic": "^1.0.34",
+    "@langchain/core": "^1.1.48",
+    "@langchain/openai": "^1.4.7"
+  }
+}
