@@ -3,14 +3,18 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "node --env-file=.env ./src/hello-rag.mjs"
+    "test": "node --env-file=.env ./src/loader-and-splitter2.mjs"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "@langchain/classic": "^1.0.34",
+    "@langchain/community": "^1.1.29",
     "@langchain/core": "^1.1.48",
-    "@langchain/openai": "^1.4.7"
+    "@langchain/openai": "^1.4.7",
+    "@langchain/textsplitters": "^1.0.1",
+    "cheerio": "^1.2.0",
+    "js-tiktoken": "^1.0.21"
   }
 }
