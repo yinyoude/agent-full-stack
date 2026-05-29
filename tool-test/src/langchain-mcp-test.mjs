@@ -9,7 +9,7 @@ import chalk from "chalk";
 
 const model = new ChatOpenAI({
   modelName: process.env.MODEL_NAME || "qwen-coder-turbo",
-  apiKey: process.env.OPENAPI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
   configuration: {
     baseURL: process.env.BASE_URL,
   },

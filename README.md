@@ -101,7 +101,7 @@ User Query → ChatOpenAI（bindTools）→ tool_calls → MCP Tool / 自定义 
 
 各子项目通常在 `.env` 中配置（参考各脚本）：
 
-- `OPENAPI_API_KEY` — API 密钥
+- `OPENAI_API_KEY` — API 密钥
 - `BASE_URL` — 兼容 OpenAI 的 API 地址
 - `MODEL_NAME` — 对话模型名称
-- `EMBEDDING_MODEL_NAME` — Embedding 模型名称（RAG 用）
+- `EMBEDDINGS_MODEL_NAME` — Embedding 模型名称（RAG 用）

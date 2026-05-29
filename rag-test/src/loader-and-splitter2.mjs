@@ -6,15 +6,15 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 const model = new ChatOpenAI({
   temperature: 0,
   modelName: process.env.MODEL_NAME || "qwen-coder-turbo",
-  apiKey: process.env.OPENAPI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
   configuration: {
     baseURL: process.env.BASE_URL,
   },
 });
 
 const embeddings = new OpenAIEmbeddings({
-  apiKey: process.env.OPENAPI_API_KEY,
-  model: process.env.EMBEDDING_MODEL_NAME,
+  apiKey: process.env.OPENAI_API_KEY,
+  model: process.env.EMBEDDINGS_MODEL_NAME,
   configuration: {
     baseURL: process.env.BASE_URL,
   },
