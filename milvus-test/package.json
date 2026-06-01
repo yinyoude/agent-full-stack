@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "node --env-file=.env ./src/insert.mjs"
+    "test": "node --env-file=.env ./src/rag.mjs"
   },
   "keywords": [],
   "author": "",
