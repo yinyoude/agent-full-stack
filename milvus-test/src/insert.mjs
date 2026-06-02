@@ -70,6 +70,8 @@ async function main() {
 
     // 加载集合
     console.log("\nLoading collection...");
+    // loadCollection 是把 queryNode 缓存到内存，一般只有需要搜索的时候才会需要 loadCollection 
+    // 下面这行注释掉也会正常插入数据
     await client.loadCollection({ collection_name: COLLECTION_NAME });
     console.log("Collection loaded");
 

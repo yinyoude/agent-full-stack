@@ -1,0 +1,20 @@
+{
+  "name": "memory-test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --env-file=.env ./src/memory/retrieval-memory.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@langchain/community": "^1.1.29",
+    "@langchain/core": "^1.1.48",
+    "@langchain/openai": "^1.4.7",
+    "@zilliz/milvus2-sdk-node": "^3.0.3",
+    "js-tiktoken": "^1.0.21",
+    "langchain": "^1.4.2"
+  }
+}
