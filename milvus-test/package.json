@@ -3,14 +3,18 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "node --env-file=.env ./src/insert.mjs"
+    "test": "node --env-file=.env ./src/ebook-reader-rag.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@langchain/community": "^1.1.29",
     "@langchain/openai": "^1.4.7",
-    "@zilliz/milvus2-sdk-node": "^3.0.1"
+    "@langchain/textsplitters": "^1.0.1",
+    "@zilliz/milvus2-sdk-node": "^3.0.1",
+    "epub2": "^3.0.2",
+    "html-to-text": "^10.0.0"
   }
 }

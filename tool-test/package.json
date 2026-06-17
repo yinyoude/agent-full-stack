@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "node --env-file=.env ./src/mcp-test.mjs"
+    "test": "node --env-file=.env ./src/hello-langchain.mjs"
   },
   "keywords": [],
   "author": "",
