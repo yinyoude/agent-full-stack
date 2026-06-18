@@ -1,6 +1,6 @@
 import { PromptTemplate, FewShotPromptTemplate } from "@langchain/core/prompts";
 import { ChatOpenAI } from "@langchain/openai";
-import { LengthBasedExampleSelector } from '@langchain/core/example_selectors'
+import { LengthBasedExampleSelector } from "@langchain/core/example_selectors";
 
 // 1. 初始化 Chat 模型
 const model = new ChatOpenAI({
@@ -13,7 +13,7 @@ const model = new ChatOpenAI({
 });
 
 // 2. 定义单条示例的 Prompt 模版
-const examplePrompt = PromptTemplate.formTemplate(
+const examplePrompt = PromptTemplate.fromTemplate(
   `用户需求：{user_requirement}
 周报片段示例：
 {report_snippet}
@@ -75,3 +75,21 @@ const fewShotPrompt = new FewShotPromptTemplate({
     "请输出一份适合发给老板和团队同步的 Markdown 周报草稿。",
   inputVariables: ["current_requirement"],
 });
+
+// 6. 演示：给定一个较长/较复杂的需求，让 selector 自动选出合适的示例
+const currentRequirement =
+  "我们本周在做「内部 AI 助手」项目，既有稳定性保障（处理线上问题），" +
+  "也有新功能上线（接入知识库、日志检索）。希望周报既能体现「把坑都兜住了」，" +
+  "又能展示一部分业务侧能感知到的亮点。";
+
+const finalPrompt = await fewShotPrompt.format({
+  current_requirement: currentRequirement,
+});
+
+console.log(finalPrompt);
+
+// const stream = await model.stream(finalPrompt);
+// console.log('\n=== AI 输出 ===');
+// for await (const chunk of stream) {
+//   process.stdout.write(chunk.content);
+// }

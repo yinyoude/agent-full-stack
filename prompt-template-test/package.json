@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "node --env-file=.env ./src/12-example-selector.mjs"
+    "test": "node --env-file=.env ./src/10-example-selector1.mjs"
   },
   "keywords": [],
   "author": "",
