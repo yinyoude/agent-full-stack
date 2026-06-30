@@ -46,8 +46,6 @@ export class AiService {
       const stream = chain.streamEvents(state, { version: 'v2' });
 
       for await (const streamEvent of stream) {
-        // eslint-disable-next-line no-debugger
-        debugger;
         if (streamEvent.event === 'on_chat_model_stream') {
           const text = getMessageContent(streamEvent.data.chunk as BaseMessage);
 
@@ -58,10 +56,9 @@ export class AiService {
 
         if (
           streamEvent.event === 'on_chain_end' &&
-          streamEvent.name === 'user_query_chain' &&
-          isToolCallingAgentState(streamEvent.data.output)
+          streamEvent.name === 'user_query_chain'
         ) {
-          nextState = streamEvent.data.output;
+          nextState = streamEvent.data.output as ToolCallingAgentState;
         }
       }
 
@@ -76,16 +73,4 @@ export class AiService {
       }
     }
   }
-}
-
-function isToolCallingAgentState(
-  value: unknown,
-): value is ToolCallingAgentState {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'messages' in value &&
-    'done' in value &&
-    'final' in value
-  );
 }
