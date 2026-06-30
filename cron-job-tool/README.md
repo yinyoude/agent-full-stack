@@ -1,98 +1,117 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Cron Job Tool
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+`cron-job-tool` is a NestJS application that exposes an AI chat endpoint backed by a LangChain tool-calling agent. The current domain is intentionally small: the agent can call a `query_user` tool to look up sample user records and then produce a natural-language answer.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Architecture Assessment
 
-## Description
+The overall architecture is reasonable for the current stage:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- `AppModule` acts as the application composition root. It wires static assets, environment configuration, and the AI feature module.
+- `AiModule` owns the AI feature boundary. HTTP handling, orchestration, model selection, prompts, tools, and agent state stay inside `src/ai`.
+- `AiController` is thin and delegates business flow to `AiService`.
+- `AiService` owns the small amount of invocation orchestration needed today: initial state, iteration limit, and final answer extraction.
+- `UserAgentChain` only defines the LangChain prompt/model/tool chain.
+- `ToolRegistry` centralizes which tools are available to each agent.
+- `LlmProvider` isolates model creation and tool binding from the rest of the feature.
 
-## Project setup
+The main improvement made here is that `query_user` is now represented by an injectable Nest provider (`QueryUserTool`) instead of a module-level exported tool constant. This keeps the tool compatible with future dependencies such as repositories, database clients, cache services, or external APIs.
 
-```bash
-$ pnpm install
+## Module Relationship
+
+```mermaid
+flowchart TD
+  AppModule["AppModule"]
+  ServeStaticModule["ServeStaticModule"]
+  ConfigModule["ConfigModule"]
+  AiModule["AiModule"]
+  AppController["AppController"]
+  AppService["AppService"]
+
+  AppModule --> ServeStaticModule
+  AppModule --> ConfigModule
+  AppModule --> AiModule
+  AppModule --> AppController
+  AppModule --> AppService
+
+  AiModule --> AiController["AiController"]
+  AiModule --> AiService["AiService"]
+  AiModule --> UserAgentChain["UserAgentChain"]
+  AiModule --> LlmProvider["LlmProvider"]
+  AiModule --> ToolRegistry["ToolRegistry"]
+  AiModule --> QueryUserTool["QueryUserTool"]
+
+  AiController --> AiService
+  AiService --> UserAgentChain
+  UserAgentChain --> LlmProvider
+  UserAgentChain --> ToolRegistry
+  LlmProvider --> ConfigModule
+  ToolRegistry --> QueryUserTool
 ```
 
-## Compile and run the project
+## Request Flow
 
-```bash
-# development
-$ pnpm run start
+1. A client sends `GET /ai/chat?query=...`.
+2. `AiController.chat()` receives the query and calls `AiService.runChain()`.
+3. `AiService` creates the initial agent state and gets the chain from `UserAgentChain`.
+4. `UserAgentChain` fetches tools from `ToolRegistry`.
+5. `LlmProvider` creates the chat model and binds those tools.
+6. `createUserAgentPrompt()` creates the system prompt and message placeholder.
+7. `createToolCallingAgentChain()` defines one agent step:
+   - ask the model for a response;
+   - if the response has tool calls, execute matching tools;
+   - append tool results to the message list;
+8. `AiService` invokes the step chain repeatedly until the model returns a final answer or the iteration limit is reached.
+9. The final answer is returned as `{ "answer": "..." }`.
 
-# watch mode
-$ pnpm run start:dev
+## Directory Guide
 
-# production mode
-$ pnpm run start:prod
+```text
+src/
+  app.module.ts                 Application composition root
+  main.ts                       Nest bootstrap
+  ai/
+    ai.controller.ts            HTTP API for AI interactions
+    ai.service.ts               Application-facing AI use case
+    ai.module.ts                AI feature module
+    chains/                     LangChain chain definitions and factories
+    entities/                   Type-only domain and chain state definitions
+    models/                     LLM creation and tool binding
+    prompts/                    Prompt factories and prompt constants
+    tools/                      Agent tool providers and tool registry
+public/
+  sse-test.html                 Static browser test page
 ```
 
-## Run tests
+## Environment
+
+The app loads environment variables from `.env.${NODE_ENV || 'local'}` via `ConfigModule`.
+
+Expected values:
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+OPENAI_API_KEY=...
+MODEL_NAME=...
+BASE_URL=...
+PORT=3000
 ```
 
-## Deployment
+`BASE_URL` is optional when using the default OpenAI endpoint.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Commands
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+pnpm install
+pnpm run start:dev
+pnpm run build
+pnpm run test
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Extension Guidelines
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- Add a new tool as an injectable provider in `src/ai/tools`.
+- Register the new provider in `AiModule`.
+- Expose it through `ToolRegistry` rather than importing tool constants directly into chains.
+- Keep controllers thin; use services for light orchestration.
+- Keep `chains/` focused on chain definitions and factories; do not put request invocation loops there.
+- Keep provider dependencies flowing inward through Nest injection instead of module-level singletons.
+- Add a dedicated runner layer only when orchestration grows beyond what `AiService` can clearly hold.

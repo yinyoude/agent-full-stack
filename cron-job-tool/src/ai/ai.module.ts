@@ -1,27 +1,19 @@
-import { ChatOpenAI } from '@langchain/openai';
 import { Module } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { AiController } from './ai.controller';
-import { ConfigService } from '@nestjs/config';
+import { UserAgentChain } from './chains/user-agent.chain';
+import { LlmProvider } from './models/llm.provider';
+import { QueryUserTool } from './tools/query-user.tool';
+import { ToolRegistry } from './tools/tool.registry';
 
 @Module({
   controllers: [AiController],
   providers: [
     AiService,
-    {
-      provide: 'CHAT_MODEL',
-      useFactory: (configService: ConfigService) => {
-        return new ChatOpenAI({
-          temperature: 0.7,
-          modelName: configService.get<string>('MODEL_NAME'),
-          apiKey: configService.get<string>('OPENAI_API_KEY'),
-          configuration: {
-            baseURL: configService.get<string>('BASE_URL'),
-          },
-        });
-      },
-      inject: [ConfigService],
-    },
+    UserAgentChain,
+    LlmProvider,
+    QueryUserTool,
+    ToolRegistry,
   ],
 })
 export class AiModule {}
