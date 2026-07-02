@@ -2,7 +2,7 @@ import { BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { Injectable } from '@nestjs/common';
 import { UserAgentChain } from './chains/user-agent.chain';
 import type { ToolCallingAgentState } from './entities/tool-calling-agent-state.entity';
-import { getMessageContent } from './utils';
+import { getMessageContent } from '../utils';
 
 @Injectable()
 export class AiService {
@@ -56,7 +56,7 @@ export class AiService {
 
         if (
           streamEvent.event === 'on_chain_end' &&
-          streamEvent.name === 'user_query_chain'
+          streamEvent.name === 'user_agent_chain'
         ) {
           nextState = streamEvent.data.output as ToolCallingAgentState;
         }
